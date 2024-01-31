@@ -1,0 +1,83 @@
+services:
+  myapp-local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: 'no'
+    env_file:
+      - ./.env
+    ports:
+      - 8082:3000
+    volumes:
+      - '.:/app'
+    command: [ 'npm', 'start' ]
+
+  mysqldb:
+    platform: linux/x86_64
+    image: mysql:5.7
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      - MYSQL_ROOT_PASSWORD=$MYSQLDB_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MYSQLDB_DATABASE
+    ports:
+      - $MYSQLDB_LOCAL_PORT:$MYSQLDB_DOCKER_PORT
+    volumes:
+      - db:/var/lib/mysql
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - mysqldb
+    environment:
+      ADMINER_DESIGN: arcs-material
+    ports:
+      - "8090:8080"
+
+  postgresdb:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: laravel_docker
+    volumes:
+      - "dbpostdata:/var/lib/postgresql/data:z"
+    ports:
+      - '5431:5432'
+
+  mongo:
+    image: mongo:4.4
+    restart: 'no'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: devel
+      MONGO_INITDB_ROOT_PASSWORD: devel
+    ports:
+      - 27017
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7.0
+    restart: 'no'
+    ports:
+      - 6379
+    volumes:
+      - redis_data:/data
+
+  mongo-express:
+    image: mongo-express
+    restart: 'no'
+    ports:
+      - 27088:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: devel
+      ME_CONFIG_MONGODB_ADMINPASSWORD: devel
+      ME_CONFIG_MONGODB_URL: mongodb://devel:devel@mongo:27017/
+
+
+volumes:
+  db:
+  dbpostdata:
+  mongo_data:
+  redis_data:
