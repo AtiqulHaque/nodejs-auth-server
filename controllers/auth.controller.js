@@ -3,7 +3,7 @@ const config = require("../config/auth.config");
 const User = db.user;
 const Role = db.role;
 const RefreshToken = db.refreshToken;
-const TokenService = require("./../service/token/token.service");
+const TokenService = require("./../services/token/token.service");
 const Op = db.Sequelize.Op;
 
 var jwt = require("jsonwebtoken");
@@ -64,8 +64,6 @@ exports.signin =  async (req, res) => {
     try {
         const response = await TokenService.signIn(req);
         
-        console.log(response);
-
         if(typeof response.status !== "undefined"){
             return res.status(response.code).json(response);
         } else{

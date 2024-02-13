@@ -1,24 +1,13 @@
-
-const dbConfig = require("../config/db.config.js");
 const Sequelize = require("sequelize");
-const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-  host: dbConfig.HOST,
-  dialect: dbConfig.dialect,
-  port: dbConfig.port,
-  operatorsAliases: false,
+const Database = require("./../utility/dbConnection");
 
-  pool: {
-    max: dbConfig.pool.max,
-    min: dbConfig.pool.min,
-    acquire: dbConfig.pool.acquire,
-    idle: dbConfig.pool.idle
-  }
-});
+const dbConnection = Database.getDbConnection();
+
 
 let connectionCheck = async () =>{
   
   try {
-    await sequelize.authenticate();
+    await dbConnection.authenticate();
     console.log('Connection has been established successfully.');
   } catch(err){
     console.error('Unable to connect to the database: ', err);
@@ -30,13 +19,13 @@ connectionCheck();
 const db = {};
 
 db.Sequelize = Sequelize;
-db.sequelize = sequelize;
+db.sequelize = dbConnection;
 
-db.tutorials = require("./tutorial.model.js")(sequelize, Sequelize);
-db.user = require("../models/user.model.js")(sequelize, Sequelize);
-db.role = require("../models/role.model.js")(sequelize, Sequelize);
+db.tutorials = require("./tutorial.model.js")(dbConnection, Sequelize);
+db.user = require("./user.model.js")(dbConnection, Sequelize);
+db.role = require("./role.model.js")(dbConnection, Sequelize);
 
-db.refreshToken = require("../models/refreshToken.model.js")(sequelize, Sequelize);
+db.refreshToken = require("./refreshToken.model.js")(dbConnection, Sequelize);
 
 db.role.belongsToMany(db.user, {
   through: "user_roles",

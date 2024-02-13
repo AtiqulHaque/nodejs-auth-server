@@ -1,20 +1,22 @@
 const db = require("../../models");
-const User = db.user;
 const Role = db.role;
-const RefreshToken = db.refreshToken;
 const Op = db.Sequelize.Op;
 const RefreshTokenValidator = require("./token.validator");
-const config = require("./../../config/auth.config");
+const config = require("../../config/auth.config");
 const SignInValidator = require("./siginin.validator");
 
 const SignUpValidator = require("./siginup.validator");
 
+const UserRepo = require("../../repositories/user.Repo");
+const RefreshToken = require("../../repositories/token.Repo");
 
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 
+
 module.exports.createRefreshToken = async (req)=>{
     
+
     let validatorResponse = RefreshTokenValidator(req.body);
 
 
@@ -22,24 +24,28 @@ module.exports.createRefreshToken = async (req)=>{
         return validatorResponse;
     }
 
+    console.info('Token validation success');
 
     const requestToken  = req.body.requestToken;
 
     try {
-        let refreshToken = await RefreshToken.findOne({ where: { token: requestToken } });
+        let refreshToken = await RefreshToken.getTokenByTokenKey(requestToken);
 
         if (!refreshToken) {
             
             return {
                 "status" : "error",
-                "message" : "Refresh token is not in database!",
+                "message" : "Refresh token not found!",
                 "code" : 403
             };
         }
 
-        if (RefreshToken.verifyExpiration(refreshToken)) {
-            RefreshToken.destroy({ where: { id: refreshToken.id } });
+        console.info('Token found in database');
 
+        if (RefreshToken.verifyExpiration(refreshToken)) {
+            console.log('Refresh token was expired. Please make a new signin request');
+            RefreshToken.removeToken(refreshToken);
+            console.log('Refresh token removed successfully');
             return {
                 "status" : "forbidden",
                 "message" : "Refresh token was expired. Please make a new signin request",
@@ -53,6 +59,7 @@ module.exports.createRefreshToken = async (req)=>{
             expiresIn: config.jwtExpiration,
         });
 
+        console.info('New token generate successfully');
 
         return {
             "status" : "success",
@@ -64,6 +71,8 @@ module.exports.createRefreshToken = async (req)=>{
         };
 
     } catch (err) {
+
+        console.error(err);
         return {
             "status" : "error",
             "message" : err,
@@ -85,11 +94,8 @@ module.exports.signIn = async (req)=>{
         }
 
 
-        const user = await User.findOne({
-            where: {
-                username: req.body.username
-            }
-        });
+        const user = await UserRepo.getUserByUserName(req.body.username);
+
 
 
         if (!user) {
@@ -117,8 +123,7 @@ module.exports.signIn = async (req)=>{
             };
         }
 
-        const token = jwt.sign({ id: user.id },
-            config.secret,
+        const token = jwt.sign({ id: user.id },config.secret,
             {
                 algorithm: 'HS256',
                 allowInsecureKeySizes: true,
@@ -171,11 +176,8 @@ module.exports.signUp = async (req)=>{
             return validatorResponse;
         }
 
-        const UserData = await User.create({
-            username: req.body.username,
-            email: req.body.email,
-            password: bcrypt.hashSync(req.body.password, 8)
-        });
+        const UserData = await UserRepo.createUser(req.body);
+
 
 
         if (req.body.roles) {

@@ -11,25 +11,25 @@ module.exports = (sequelize, Sequelize) => {
         },
     });
 
-    RefreshToken.createToken = async function (user) {
-        let expiredAt = new Date();
+    // RefreshToken.createToken = async function (user) {
+    //     let expiredAt = new Date();
 
-        expiredAt.setSeconds(expiredAt.getSeconds() + config.jwtRefreshExpiration);
+    //     expiredAt.setSeconds(expiredAt.getSeconds() + config.jwtRefreshExpiration);
 
-        let _token = uuidv4();
+    //     let _token = uuidv4();
 
-        let refreshToken = await this.create({
-            token: _token,
-            userId: user.id,
-            expiryDate: expiredAt.getTime(),
-        });
+    //     let refreshToken = await this.create({
+    //         token: _token,
+    //         userId: user.id,
+    //         expiryDate: expiredAt.getTime(),
+    //     });
 
-        return refreshToken.token;
-    };
+    //     return refreshToken.token;
+    // };
 
-    RefreshToken.verifyExpiration = (token) => {
-        return token.expiryDate.getTime() < new Date().getTime();
-    };
+    // RefreshToken.verifyExpiration = (token) => {
+    //     return token.expiryDate.getTime() < new Date().getTime();
+    // };
 
     return RefreshToken;
 };
