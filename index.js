@@ -1,6 +1,8 @@
 // app.js
 const express = require('express')
 const app = express()
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
 app.use(express.json())
 
@@ -56,5 +58,39 @@ app.get('/', (req, res) => {
 require('./routes/auth.routes')(app);
 require('./routes/user.routes')(app);
 
+const options = {
+  definition: {
+    openapi: "3.1.0",
+    info: {
+      title: "NodeJS Based Jwt Token Auth server  API with Swagger",
+      version: "0.1.0",
+      description:
+        "This is a  NodeJS Based Jwt Token Auth server made with Express and documented with Swagger",
+      license: {
+        name: "MIT",
+        url: "https://spdx.org/licenses/MIT.html",
+      },
+      contact: {
+        name: "Md.Atiqul Haque",
+        url: "https://atiqul.me",
+        email: "mailtoatiqul.com",
+      },
+    },
+    servers: [
+      {
+        url: `http://localhost:${port}`,
+      },
+    ],
+  },
+  apis: ["./routes/*.js"],
+};
+
+const specs = swaggerJsdoc(options);
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(specs)
+);
 
 app.listen(port, () => console.log(`Hi Example app listening on port ${port}!`))

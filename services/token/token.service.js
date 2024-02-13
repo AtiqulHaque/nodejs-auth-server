@@ -88,6 +88,7 @@ module.exports.signIn = async (req)=>{
     try {
         
         let validatorResponse = SignInValidator(req.body);
+        
 
         if(validatorResponse.status === "validation-error"){
             return validatorResponse;
